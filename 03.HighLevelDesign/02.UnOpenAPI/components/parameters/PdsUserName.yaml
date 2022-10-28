@@ -1,0 +1,5 @@
+title: PDSユーザ名
+example: "トッパン・フォームズ株式会社"
+type: string
+maxLength: 64
+pattern: "[a-zA-Zぁ-んァ-ヶ一-龠&,.-・]"

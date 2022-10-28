@@ -1,0 +1,107 @@
+post:
+  operationId: loginTfUser
+  tags:
+    - tfoperator
+  summary: TFオペレータログイン
+  parameters:
+    - name: timeStamp
+      in: header
+      description: | 
+        タイムスタンプ<br>
+        形式は「yyyy/MM/dd hh:mm:ss.iii」とする
+      required: true
+      schema:
+        $ref: '#/components/schemas/timeStamp'
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/TfUserRequest'
+    required: true
+  description: |
+    # 概要
+    TFオペレータ情報で管理画面の認証を実施する。<br>
+    認証にはAmazon Cognitoを利用する。<br>
+    TFオペレータパスワードリセットフラグがtrueの場合はパスワード変更用アクセストークンを発行し、<br>
+    通常のアクセストークンは発行しない。<br>
+    パスワード変更後、通常のアクセストークンを発行する。<br>
+    アクセストークンは初回実行時はTFオペレータログインAPIにより発行される。<br>
+    アクセストークンはログイン画面以外のすべての機能の認証に利用される。<br>
+    ※ペイロード内部のTFオペレータパスワードリセットフラグがtrueのアクセストークンが発行された場合には、TFオペレータパスワードリセット画面のみの遷移に制限される。<br>
+    アクセストークン取得後に画面からAPIを実行する作業を実行すると有効期限を更新した新しいアクセストークンがAPIから返却される。<br>
+    アクセストークンの有効期限は30分。<br>
+
+  responses:
+    '200':
+      description: 正常終了レスポンス
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TfUserResponse'
+    '400':
+      description: |
+        Bad Request: エラーコード一覧
+        |エラーコード|エラー名|メッセージ|置換対象|内容|
+        |------------|----------|----|----|----|
+        |010006|ログイン失敗エラー|ログインできませんでした。||ログイン時のエラーです。
+        |020001|必須チェック不正|{0}を入力してください。|{0}: 項目名|必須パラメータが指定されていなかった場合のエラーです。|        
+        |020002|最大桁数チェック不正|{0}が許容桁数({1}桁)を超過しています。|{0}: 項目名<br>{1}: 最大桁数|APIが規定する最大入力桁数を超過する桁数での指定があった場合のエラーです。
+        |020003|フォーマットチェック不正|{0}の形式が正しくありません。|{0}: 項目名|APIが規定するデータフォーマットと相違があった場合のエラーです。|
+        |020004|該当無し|{0}に該当する情報が存在しません。|{0}: 項目名|存在しないデータを指定した場合のエラーです。
+        |020014|桁数不一致|{0}が既定の桁数（{1}桁）と不一致です。|{0}: 項目名<br>{1}: 値|パラメータが既定の桁数と不一致の場合のエラーです。
+        |020016|最小桁数チェック不正|{0}の許容桁数({1}桁)が不足しています。|{0}: 項目名<br>{1}: 値|APIが規定する最小入力桁数を不足する桁数での設定があった場合のエラーです。
+        |020019|型チェック不正|{0}は{1}型ではありません。|{0}: 項目名<br>{1}: 値|指定の型以外の型が設定されている場合のエラーです。
+
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponseBody'
+    '500':
+      $ref: '#/components/schemas/errorResponseBody500'
+
+components:
+  schemas:
+    accessToken:
+      $ref: '../../components/header/accessToken.yaml'
+    timeStamp:
+      $ref: '../../components/header/timeStamp.yaml'
+
+    # Request body
+    TfUserRequest:
+      description: TFオペレータログインリクエスト
+      type: object
+      properties:
+        tfOperatorId:
+          $ref: '../../components/parameters/TfUserId.yaml'
+        tfOperatorPassword:
+          $ref: '../../components/parameters/TfUserPassword.yaml'
+      required:
+        - tfOperatorId
+        - tfOperatorPassword
+
+    # Responses
+    TfUserResponse:
+      description: レスポンス
+      type: object
+      properties:
+        status:
+          $ref: '../../components/parameters/status.yaml'
+        tfOperatorId:
+          $ref: '../../components/parameters/TfUserId.yaml'
+        tfOperatorName:
+          $ref: '../../components/parameters/TfUserName.yaml'
+        tfOperatorPasswordResetFlg:
+          $ref: '../../components/parameters/TFUserPasswordResetFlg.yaml'
+        accessToken:
+          $ref: '../../components/parameters/AccessToken.yaml'
+    # エラーレスポンス
+    errorResponseBody:
+      description: ERRORレスポンス
+      type: object
+      properties:
+        status:
+          $ref: '../../components/parameters/statusError.yaml'
+        errorInfo:
+          $ref: '../../components/parameters/errorInfo.yaml'
+    errorResponseBody500:
+      $ref: '../../components/parameters/errorResponseBody500.yaml'

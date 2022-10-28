@@ -1,0 +1,38 @@
+get:
+  operationId: getHealth
+  tags:
+    - healthCheck
+  summary: ヘルスチェック
+  description: サーバーの状態を返します。
+  responses:
+    '200':
+      description: サーバーは正常に動作しています
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/getHealthResponse'
+    '503':
+      description: サーバーからの応答がありませんでした
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/getHealthResponse503'
+
+components:
+  getHealthResponse:
+    description: サーバーの状態のレスポンス
+    type: object
+    properties:
+      status:
+        type: string
+        enum:
+          - OK
+
+  getHealthResponse503:
+    description: サーバーの状態のレスポンス
+    type: object
+    properties:
+      status:
+        type: string
+        enum:
+          - NG

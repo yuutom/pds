@@ -1,0 +1,103 @@
+post:
+  operationId: deleteTfUser
+  security:
+    - AccessToken: []
+  tags:
+    - tfoperator
+  summary: "TFオペレータ無効化"
+  parameters:
+    - name: accessToken
+      in: header
+      description: アクセストークン
+      required: true
+      schema:
+        $ref: '#/components/schemas/accessToken'
+    - name: timeStamp
+      in: header
+      description: | 
+        タイムスタンプ<br>
+        形式は「yyyy/MM/dd hh:mm:ss.iii」とする
+      required: true
+      schema:
+        $ref: '#/components/schemas/timeStamp'
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/postSearchTfUserRequest'
+  description: |
+    # 概要
+    TFオペレータを無効化(論理削除)する。<br>
+    無効化されたデータの再有効化は出来ない。
+  responses:
+    '200':
+      description: 正常終了レスポンス
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/deleteTfUserResponse'
+    '400':
+      description: |
+        Bad Request: エラーコード一覧
+        |エラーコード|エラー名|メッセージ|置換対象|内容|
+        |------------|----------|----|----|----|
+        |010001|パラメータ構造不正|パラメータの構造が不正です。||パラメータ(JSON)の構造が破綻している場合のエラーです。
+        |010004|アクセストークンチェック不正|アクセストークンが不正です。||以下に該当する場合のエラーです。<br>・リクエストヘッダに指定されたアクセストークンが不正(アクセストークンの有効期限が切れている場合も不正なアクセストークンとみなされます。)<br>・リクエストヘッダにアクセストークンが指定されていない
+        |020001|必須チェック不正|{0}を入力してください。|{0}: 項目名|必須パラメータが指定されていなかった場合のエラーです。|        
+        |020002|最大桁数チェック不正|{0}が許容桁数({1}桁)を超過しています。|{0}: 項目名<br>{1}: 最大桁数|APIが規定する最大入力桁数を超過する桁数での指定があった場合のエラーです。
+        |020003|フォーマットチェック不正|{0}の形式が正しくありません。|{0}: 項目名|APIが規定するデータフォーマットと相違があった場合のエラーです。|
+        |020004|該当無し|{0}に該当する情報が存在しません。|{0}: 項目名|存在しないデータを指定した場合のエラーです。
+        |020007|タイムスタンプチェック不正|タイムスタンプが不正です。||以下に該当する場合のエラーです。<br>・リクエストヘッダに指定された指定されたタイムスタンプが不正<br>・リクエストヘッダに指定されたタイムスタンプが指定されていない
+        |020014|桁数不一致|{0}が既定の桁数（{1}桁）と不一致です。|{0}: 項目名<br>{1}: 値|パラメータが既定の桁数と不一致の場合のエラーです。
+        |020016|最小桁数チェック不正|{0}の許容桁数({1}桁)が不足しています。|{0}: 項目名<br>{1}: 値|APIが規定する最小入力桁数を不足する桁数での設定があった場合のエラーです。
+        |020018|TFオペレータの有効状態が無効|指定のTFオペレータは既に無効化されています。||指定したTFオペレータが既に無効化されていた場合のエラーです。
+        |020019|型チェック不正|{0}は{1}型ではありません。|{0}: 項目名<br>{1}: 値|指定の型以外の型が設定されている場合のエラーです。
+        |020020|入力可能文字不正|{0}に入力不可の文字が含まれています。|{0}: 項目名|入力不可の文字が含まれている場合のエラーです。
+        |030009|無効化エラー|対象のデータは既に無効化されています。||対象のデータが既に無効化されていた場合のエラーです。
+        |990003|復号エラー|復号処理に失敗しました。||復号プロセスで例外が発生した場合のエラーです。
+        |990004|電子署名の不一致|電子署名の検証において不正な署名と判定されました。||電子署名の検証に失敗した場合のエラーです。
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponseBody'
+    '500':
+      $ref: '#/components/schemas/errorResponseBody500'
+
+
+components:
+  schemas:
+    accessToken:
+      $ref: '../../components/header/accessToken.yaml'
+    timeStamp:
+      $ref: '../../components/header/timeStamp.yaml'
+
+    # Request body
+    postSearchTfUserRequest:
+      description: TFオペレータ情報リクエスト
+      type: object
+      properties:
+        tfOperatorId:
+          $ref: '../../components/parameters/TfUserId.yaml'
+      required: 
+        - tfOperatorId
+
+    # Responses
+    deleteTfUserResponse:
+      description: TFオペレータ削除レスポンス
+      type: object
+      properties:
+        status:
+          $ref: '../../components/parameters/status.yaml'
+        accessToken:
+          $ref: '../../components/parameters/AccessToken.yaml'
+    # エラーレスポンス
+    errorResponseBody:
+      description: ERRORレスポンス
+      type: object
+      properties:
+        status:
+          $ref: '../../components/parameters/statusError.yaml'
+        errorInfo:
+          $ref: '../../components/parameters/errorInfo.yaml'
+    errorResponseBody500:
+      $ref: '../../components/parameters/errorResponseBody500.yaml'

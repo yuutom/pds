@@ -1,0 +1,4 @@
+title: PDSユーザ公開鍵インデックス
+example: 100
+type: int
+pattern: '[0-9]'

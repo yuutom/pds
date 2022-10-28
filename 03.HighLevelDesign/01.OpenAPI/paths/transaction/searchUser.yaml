@@ -1,0 +1,231 @@
+post:
+  operationId: searchUser
+  security:
+    - AccessToken: []
+  tags:
+    - transaction
+  summary: 個人情報検索
+  parameters:
+    - name: pdsUserId
+      in: header
+      description: 入力規則：```^C\d{7}$```
+      required: true
+      schema:
+        $ref: '#/components/schemas/pdsUserId'
+    - name: timeStamp
+      in: header
+      description: |
+        タイムスタンプ<br>
+        形式は「yyyy/MM/dd hh:mm:ss.iii」とする
+      required: true
+      schema:
+        $ref: '#/components/schemas/timeStamp'
+    - name: accessToken
+      in: header
+      description: アクセストークン
+      required: true
+      schema:
+        $ref: '#/components/schemas/accessToken'
+    - name: pageNo
+      in: path
+      description: 入力規則：	```\d+```
+      schema:
+        $ref: '#/components/schemas/pageNo'
+    - name: pdsUserDomainName
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/pdsUserDomainName'
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/UserRequest'
+    required: true
+  description: |
+    # 概要
+    検索条件に一致する個人情報のトランザクションIDを取得・返却する。<br>
+    1000件を超えるトランザクションIDを取得する場合、ページNoを指定して取得する。
+
+    ## ページNo 説明
+    ・ページNoを省略した場合、ページNoに1を指定したものとする。<br>
+    ・指定したページNoに応じたトランザクションIDを1000件毎に返却する。<br>
+    （ページNoが1の場合、1～1000件目のトランザクションID）<br>
+    ・指定したページNoに応じたトランザクションIDが1件も存在しない場合、レスポンスのHTTPステータスは200、かつtidリストが空で返却される。
+
+  responses:
+    '200':
+      description: 正常終了レスポンス
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserResponse'
+    '400':
+      description: |
+        Bad Request: エラーコード一覧
+        |エラーコード|エラー名|メッセージ|置換対象|内容|
+        |------------|----------|----|----|----|
+        |010001|パラメータ構造不正|パラメータの構造が不正です。||パラメータ(JSON)の構造が破綻している場合のエラーです。
+        |010002|PDSユーザIDチェック不正|PDSユーザIDが不正です。||以下に該当する場合のエラーです。<br>・リクエストヘッダに指定されたPDSユーザIDが不正<br>・リクエストヘッダにPDSユーザIDが指定されていない
+        |010004|アクセストークンチェック不正|アクセストークンが不正です。||以下に該当する場合のエラーです。<br>・リクエストヘッダに指定されたアクセストークンが不正(アクセストークンの有効期限が切れている場合も不正なアクセストークンとみなされます。)<br>・リクエストヘッダにアクセストークンが指定されていない
+        |020001|必須チェック不正|{0}を入力してください。|{0}: 項目名|必須パラメータが指定されていなかった場合のエラーです。
+        |020002|最大桁数チェック不正|{0}が許容桁数({1}桁)を超過しています。|{0}: 項目名<br>{1}: 最大桁数|APIが規定する最大入力桁数を超過する桁数での指定があった場合のエラーです。
+        |020003|フォーマットチェック不正|{0}の形式が正しくありません。|{0}: 項目名|APIが規定するデータフォーマットと相違があった場合のエラーです。|
+        |020007|タイムスタンプチェック不正|タイムスタンプが不正です。||以下に該当する場合のエラーです。<br>・リクエストヘッダに指定された指定されたタイムスタンプが不正<br>・リクエストヘッダに指定されたタイムスタンプが指定されていない
+        |030002|アクセストークン生成失敗|アクセストークン生成に失敗しました。(既に発行されたアクセストークンとの重複)||アクセストークンとして生成された100桁のランダム文字列が既にtoken_storageテーブルに存在する事態が3回立て続けに発生した場合のエラーです。
+        |030006|期間指定不正|期限指定の範囲が不正です。||期間指定が不正な場合のエラーです。
+        |990003|復号エラー|復号処理に失敗しました。||復号プロセスで例外が発生した場合のエラーです。
+        |990004|電子署名の不一致|電子署名の検証において不正な署名と判定されました。||電子署名の検証に失敗した場合のエラーです。
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponseBody'
+    '500':
+      $ref: '#/components/schemas/errorResponseBody500'
+
+components:
+  schemas:
+    pdsUserId:
+      $ref: '../../components/header/PdsUserId.yaml'
+    accessToken:
+      $ref: '../../components/header/AccessToken.yaml'
+    timeStamp:
+      $ref: '../../components/header/TimeStamp.yaml'
+    pageNo:
+      $ref: '../../components/header/pageNo.yaml'
+    pdsUserDomainName:
+      $ref: '../../components/parameters/pdsUserDomainName.yaml'
+
+    # Request body
+    UserRequest:
+      description: リクエストボディ
+      type: object
+      properties:
+        userIdMatchMode:
+          title: 検索用ユーザID検索モード
+          type: string
+          example: "前方一致"
+          pattern: '[前方一致|後方一致|部分一致]'
+          description: |
+            前方一致、後方一致、部分一致を指定する
+        userIdStr:
+          title: 検索用ユーザID検索文字列
+          type: string
+          pattern: '禁則文字無し'
+          maxLength: 36
+          example: "C0123456"
+        dataJsonKey:
+          title: 保存データJsonキー情報
+          type: string
+          example: "data.name.firstName"
+          pattern: '禁則文字無し'
+          description: |
+            JSON検索の場合はキーを指定する。<br>
+            指定がなければ文字列として検索する。<br>
+            ※指定例<br>
+            ```
+              {
+                  "data": {
+                      "name": {
+                          "firstName": "XXX"
+                      }
+                  }
+              }
+            ```
+              上記の場合：data.name.firstName
+            ```
+              {
+                  "data": {
+                      "names": [
+                          { "firstName": "XXX" },
+                          { "firstName": "YYY" }
+                      ]
+                  }
+              }
+            ```
+            上記の場合：data.names.[0].firstName
+        dataMatchMode:
+          title: 保存データ検索モード
+          type: string
+          pattern: '[前方一致|後方一致|部分一致]'
+          example: "前方一致"
+          description: |
+            前方一致、後方一致、部分一致を指定する
+        dataStr:
+          title: 保存データ検索文字列
+          type: string
+          pattern: '禁則文字無し'
+          example: "taro"
+        imageHash:
+          title: 保存されたバイナリデータのハッシュ値
+          type: string
+          pattern: '[a-zA-Z0-9]'
+          example: "glakjgirhul"
+          description: |
+            AWSに保存されたimageの情報をハッシュ化したもの<br>
+            保存されたバイナリデータでの検索はハッシュ値完全一致のみ対応
+        fromDate:
+          title: 検索用日時From
+          type: string
+          example: "2023/01/01"
+          maxLength: 10
+          minLength: 10
+          pattern: '[0-9/]'
+          description: |
+            形式は「yyyy/MM/dd」とする<br>
+            入力規則：```\d{4}/\d{2}/\d{2}```
+        toDate:
+          title: 検索用日時To
+          type: string
+          example: "2023/12/31"
+          maxLength: 10
+          minLength: 10
+          pattern: '[0-9/]'
+          description: |
+            形式は「yyyy/MM/dd」とする<br>
+            入力規則：```\d{4}/\d{2}/\d{2}```
+
+    # Responses
+    UserResponse:
+      description: レスポンス
+      type: object
+      properties:
+        status:
+          $ref: '../../components/parameters/Status.yaml'
+        accessToken:
+          $ref: '../../components/header/AccessToken.yaml'
+        maxPage:
+          title: 最大ページ数
+          type: int
+          example: 1
+          pattern: '[0-9]'
+        maxCount:
+          title: 最大項目数
+          type: int
+          example: 2
+          pattern: '[0-9]'
+        pageNo:
+          title: ページNo
+          type: int
+          example: 100
+          pattern: '[0-9]'
+        tidList:
+          title: tidリスト
+          type: array
+          maxLength: 36
+          pattern: '[a-zA-Z0-9]'
+          items:
+            type: string
+          example:
+            - "transaction0101"
+            - "transaction0102"
+    errorResponseBody:
+      description: ERRORレスポンス
+      type: object
+      properties:
+        status:
+          $ref: '../../components/parameters/StatusError.yaml'
+        errorInfo:
+          $ref: '../../components/parameters/ErrorInfo.yaml'
+    errorResponseBody500:
+      $ref: '../../components/parameters/errorResponseBody500.yaml'

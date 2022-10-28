@@ -1,0 +1,6 @@
+title: TFオペレータ名
+example: "山田 太郎"
+type: string
+minLength: 2
+maxLength: 12
+pattern: "[a-zA-Z0-9０-９ぁ-んァ-ヶ一-龠]"

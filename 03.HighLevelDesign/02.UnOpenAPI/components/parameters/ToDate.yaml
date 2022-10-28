@@ -1,0 +1,9 @@
+title: 検索日To
+example: "2023/12/31"
+type: string
+maxLength: 10
+minLength: 10
+pattern: '[0-9/]'
+description: |
+  形式は「yyyy/MM/dd」とする<br>
+  入力規則：```\d{4}/\d{2}/\d{2}```

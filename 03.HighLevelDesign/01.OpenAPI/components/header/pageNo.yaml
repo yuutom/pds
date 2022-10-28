@@ -1,0 +1,5 @@
+title: ページNo
+type: int
+example: 100
+pattern: '[0-9]'
+

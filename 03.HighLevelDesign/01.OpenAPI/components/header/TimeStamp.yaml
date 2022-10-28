@@ -1,0 +1,8 @@
+# ヘッダ共通系
+title: タイムスタンプ
+type: string
+example: '2022/01/01 12:34:56.789'
+maxLength: 23
+minLength: 23
+readOnly: true
+pattern: '[0-9 :/.]'

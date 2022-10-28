@@ -1,0 +1,76 @@
+openapi: 3.0.0
+info:
+  title: PDS外部公開API仕様書
+  version: 2.0.0
+servers:
+  - url: https://{pdsSubDomain}.{tdcDomain}/
+    description: |
+      プロダクション API<br>
+      - pdsSubDomain：PDSサブドメイン<br>
+      - tdcDomain：板橋ドメイン
+    variables:
+      pdsSubDomain:
+        default: XXXX
+      tdcDomain:
+        default: XXXX
+  - url: http://{host}:{port}/
+    description: 開発用
+    variables:
+      host:
+        default: localhost
+      port:
+        default: '8000'
+
+paths:
+  /health:
+    $ref: ./paths/healthCheck.yaml
+  /api/2.0/{pdsUserDomainName}/token:
+    $ref: ./paths/token/token.yaml
+  /api/2.0/{pdsUserDomainName}/transaction?tid={tid}:
+    $ref: ./paths/transaction/getAndDeleteUser.yaml
+  /api/2.0/{pdsUserDomainName}/transaction/search/{pageNo}:
+    $ref: ./paths/transaction/searchUser.yaml
+  /api/2.0/{pdsUserDomainName}/transaction:
+    $ref: ./paths/transaction/registAndUpdateUser.yaml
+components:
+  securitySchemes:
+    AccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        ### ・アクセストークン概要
+        アクセストークンは初回実行時はアクセストークン発行APIにより発行される。<br>
+        アクセストークンは個人情報に関するAPI群（transaction機能）を利用するための認証情報として利用される。<br>
+        アクセストークン取得後に個人情報に関するAPI群（transaction機能）を利用すると、<br>有効期限を更新した新しいアクセストークンがAPIから返却される。<br>
+        アクセストークンの有効期限は1,000ミリ秒。
+
+        ### ・JWTの概要
+        ヘッダ、ペイロード、署名の3つから成る。<br>
+        ペイロードは伝達する情報の本体で、システムが必要とするデータを任意に指定することができる。
+
+        ### ・ペイロード構成
+        |項目物理名|項目論理名|備考|
+        |------------|----------|----|
+        |pdsUserId|PDSユーザID||
+        |pdsUserName|PDSユーザ名||
+        |accessToken|アクセストークン||
+        |exp|有効期限|JWT規定の有効期限。<br>1000ミリ秒有効。|
+
+        ### ・ペイロードの一例
+        ```
+        {
+          "pdsUserId": "C0123456"
+          "pdsUserName": "山田 太郎"
+          "accessToken": "9886446D27D148B24E7D66751EAF81143B3F2C81CBBF3E58465F8836DBF6C3C7556D1141F22B692C4164A4E59C2EDDF3988E17889F091AF82DE8D7555F27806215AFB7AF21E9D72A392413A54A09C4B5834A6CB4D9A5D12214CB84B76E6DA47164D27460"
+          "exp": "2022/01/01 12:34:56.789"
+        }
+        ```
+
+tags:
+  - name: transaction
+    description: 個人情報に関するAPI群
+  - name: token
+    description: アクセストークン発行に関するAPI群
+  - name: healthCheck
+    description: ヘルスチェックに関するAPI群

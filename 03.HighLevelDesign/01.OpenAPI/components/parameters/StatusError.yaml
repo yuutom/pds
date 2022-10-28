@@ -1,0 +1,8 @@
+  title: ステータス
+  description: |
+    ステータス<br>「OK」or「NG」
+  type: string
+  example: "NG"
+  pattern: '[OK|NG]'
+  maxLength: 2
+  minLength: 2

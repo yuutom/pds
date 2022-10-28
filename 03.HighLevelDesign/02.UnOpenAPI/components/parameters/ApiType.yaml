@@ -1,0 +1,9 @@
+title: API種別
+example: ["read"]
+pattern: '[token|create|read|update|delete|search|multiDownload|multiDelete]'
+description: | 
+  「すべて」が指定されている場合は、<br>
+  「token」「create」「read」「update」「delete」「search」「multiDownload」「multiDelete」が指定される
+type: array
+items:
+  type: string

@@ -1,0 +1,20 @@
+  title: エラー情報
+  description: |
+    エラー情報（エラー時のみ出力）
+  type: array
+  items:
+    type: object
+    properties:
+      errorCode:
+        title: エラーコード
+        description: エラー時のみ出力
+        type: string
+        example: "010001"
+        pattern: '[0-9]'
+        maxLength: 6
+        minLength: 6
+      message:
+        title: エラーメッセージ
+        description: エラー時のみ出力
+        type: string
+        example: "パラメータの構造が不正です。"

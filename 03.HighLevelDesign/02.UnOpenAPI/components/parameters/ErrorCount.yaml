@@ -1,0 +1,4 @@
+title: 失敗回数
+example: 5
+type: int
+pattern: '[0-9]'

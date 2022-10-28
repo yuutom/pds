@@ -1,0 +1,8 @@
+title: TF担当者メールアドレス
+example: "XXX@toppan-f.co.jp;YYY@toppan-f.co.jp;ZZZ@toppan-f.co.jp"
+type: string
+maxLength: 512
+pattern: '[a-zA-Z0-9_.+-@;]'
+description: |
+  セミコロン区切りで複数登録可能<br>
+  入力規則：```^([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)+(;[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)*$```

@@ -1,0 +1,182 @@
+post:
+  operationId: getUseCount
+  security:
+    - AccessToken: []
+  tags:
+    - pdsuser
+  summary: PDSユーザ利用回数確認
+  parameters:
+    - name: accessToken
+      in: header
+      description: アクセストークン
+      required: true
+      schema:
+        $ref: '#/components/schemas/accessToken'
+    - name: timeStamp
+      in: header
+      description: | 
+        タイムスタンプ<br>
+        形式は「yyyy/MM/dd hh:mm:ss.iii」とする
+      required: true
+      schema:
+        $ref: '#/components/schemas/timeStamp'
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/TfUserRequest'
+    required: true
+  description: |
+    # 概要
+    PDSユーザごとに各APIの成功と失敗の回数をそれぞれ集計し取得する。
+  responses:
+    '200':
+      description: 正常終了レスポンス
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TfUserResponse'
+    '400':
+      description: |
+        Bad Request: エラーコード一覧
+            
+        |エラーコード|エラー名|メッセージ|置換対象|内容|
+        |------------|----------|----|----|----|
+        |010001|パラメータ構造不正|パラメータの構造が不正です。||パラメータ(JSON)の構造が破綻している場合のエラーです。
+        |010002|PDSユーザIDチェック不正|PDSユーザIDが不正です。||以下に該当する場合のエラーです。<br>・リクエストヘッダに指定されたPDSユーザIDが不正<br>・リクエストヘッダにPDSユーザIDが指定されていない
+        |010004|アクセストークンチェック不正|アクセストークンが不正です。||以下に該当する場合のエラーです。<br>・リクエストヘッダに指定されたアクセストークンが不正(アクセストークンの有効期限が切れている場合も不正なアクセストークンとみなされます。)<br>・リクエストヘッダにアクセストークンが指定されていない
+        |020001|必須チェック不正|{0}を入力してください。|{0}: 項目名|必須パラメータが指定されていなかった場合のエラーです。|        
+        |020002|最大桁数チェック不正|{0}が許容桁数({1}桁)を超過しています。|{0}: 項目名<br>{1}: 最大桁数|APIが規定する最大入力桁数を超過する桁数での指定があった場合のエラーです。
+        |020003|フォーマットチェック不正|{0}の形式が正しくありません。|{0}: 項目名|APIが規定するデータフォーマットと相違があった場合のエラーです。|
+        |020007|タイムスタンプチェック不正|タイムスタンプが不正です。||以下に該当する場合のエラーです。<br>・リクエストヘッダに指定された指定されたタイムスタンプが不正<br>・リクエストヘッダに指定されたタイムスタンプが指定されていない
+        |020014|桁数不一致|{0}が既定の桁数（{1}桁）と不一致です。|{0}: 項目名<br>{1}: 値|パラメータが既定の桁数と不一致の場合のエラーです。
+        |020019|型チェック不正|{0}は{1}型ではありません。|{0}: 項目名<br>{1}: 値|指定の型以外の型が設定されている場合のエラーです。
+        |020020|入力可能文字不正|{0}に入力不可の文字が含まれています。|{0}: 項目名|入力不可の文字が含まれている場合のエラーです。
+        |030002|アクセストークン生成失敗|アクセストークン生成に失敗しました。(既に発行されたアクセストークンとの重複)||アクセストークンとして生成された100桁のランダム文字列が既にtoken_storageテーブルに存在する事態が3回立て続けに発生した場合のエラーです。
+        |030006|期間指定不正|期限指定の範囲が不正です。||期間指定が不正な場合のエラーです。
+        |990003|復号エラー|復号処理に失敗しました。||復号プロセスで例外が発生した場合のエラーです。
+        |990004|電子署名の不一致|電子署名の検証において不正な署名と判定されました。||電子署名の検証に失敗した場合のエラーです。
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponseBody'
+    '500':
+      $ref: '#/components/schemas/errorResponseBody500'
+
+components:
+  schemas:
+    accessToken:
+      $ref: '../../components/header/accessToken.yaml'
+    timeStamp:
+      $ref: '../../components/header/timeStamp.yaml'
+
+    # Request body
+    TfUserRequest:
+      description: リクエストボディ
+      type: object
+      properties:
+        pdsUserId:
+          $ref: '../../components/parameters/pdsUserId.yaml'
+        fromDate:
+          $ref: '../../components/parameters/fromDate.yaml'
+        toDate:
+          $ref: '../../components/parameters/toDate.yaml'
+      required:
+        - pdsUserId
+
+    # Responses
+    TfUserResponse:
+      description: レスポンス
+      type: object
+      properties:
+        status:
+          $ref: '../../components/parameters/status.yaml'
+        accessToken:
+          $ref: '../../components/parameters/accessToken.yaml'
+        charge:
+          title: 請求金額
+          type: int
+          example: 100000
+          pattern: '[0-9]'
+          description: | 
+            成功回数から金額を自動計算する。<br>
+            単位は円（JPY）とする。
+        pdsUseData:
+          title: PDS利用状況データ
+          type: object
+          properties:
+            token:
+              title: アクセストークン発行
+              type: object
+              properties:
+                successCount:
+                  $ref: '../../components/parameters/successCount.yaml'
+                errorCount:
+                  $ref: '../../components/parameters/errorCount.yaml'      
+            read:
+              title: 参照
+              type: object
+              properties:
+                successCount:
+                  $ref: '../../components/parameters/successCount.yaml'
+                errorCount:
+                  $ref: '../../components/parameters/errorCount.yaml'      
+            search:
+              title: 検索
+              type: object
+              properties:
+                successCount:
+                  $ref: '../../components/parameters/successCount.yaml'
+                errorCount:
+                  $ref: '../../components/parameters/errorCount.yaml'      
+            create:
+              title: 登録
+              type: object
+              properties:
+                successCount:
+                  $ref: '../../components/parameters/successCount.yaml'
+                errorCount:
+                  $ref: '../../components/parameters/errorCount.yaml'      
+            update:
+              title: 更新
+              type: object
+              properties:
+                successCount:
+                  $ref: '../../components/parameters/successCount.yaml'
+                errorCount:
+                  $ref: '../../components/parameters/errorCount.yaml'      
+            delete:
+              title: 削除
+              type: object
+              properties:
+                successCount:
+                  $ref: '../../components/parameters/successCount.yaml'
+                errorCount:
+                  $ref: '../../components/parameters/errorCount.yaml'      
+            multiDownload:
+              title: 一括DL
+              type: object
+              properties:
+                successCount:
+                  $ref: '../../components/parameters/successCount.yaml'
+                errorCount:
+                  $ref: '../../components/parameters/errorCount.yaml'      
+            multiDelete:
+              title: 一括削除
+              type: object
+              properties:
+                successCount:
+                  $ref: '../../components/parameters/successCount.yaml'
+                errorCount:
+                  $ref: '../../components/parameters/errorCount.yaml'      
+
+    errorResponseBody:
+      description: ERRORレスポンス
+      type: object
+      properties:
+        status:
+          $ref: '../../components/parameters/statusError.yaml'
+        errorInfo:
+          $ref: '../../components/parameters/errorInfo.yaml'
+    errorResponseBody500:
+      $ref: '../../components/parameters/errorResponseBody500.yaml'

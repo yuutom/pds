@@ -1,0 +1,9 @@
+title: PDSユーザドメイン名
+example: "toppan-f"
+type: string
+maxLength: 20
+minLength: 5
+pattern: '[a-z0-9-_]'
+description: |
+  PDSユーザを一意に識別する名称<br>
+  入力規則：```^[a-z][a-z0-9-_]{4-19}$```

@@ -1,0 +1,143 @@
+post:
+  operationId: getDownloadStatus
+  security:
+    - AccessToken: []
+  tags:
+    - transaction
+  summary: 個人情報一括DL状況確認
+  parameters:
+    - name: accessToken
+      in: header
+      description: アクセストークン
+      required: true
+      schema:
+        $ref: '#/components/schemas/accessToken'
+    - name: timeStamp
+      in: header
+      description: | 
+        タイムスタンプ<br>
+        形式は「yyyy/MM/dd hh:mm:ss.iii」とする
+      required: true
+      schema:
+        $ref: '#/components/schemas/timeStamp'
+  requestBody:
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/TfUserRequest'
+  description: |
+    # 概要
+    個人情報一括DLの実行状況を確認する。
+  responses:
+    '200':
+      description: 正常終了レスポンス
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TfUserResponse'
+    '400':
+      description: |
+        Bad Request: エラーコード一覧
+        |エラーコード|エラー名|メッセージ|置換対象|内容|
+        |------------|----------|----|----|----|
+        |010001|パラメータ構造不正|パラメータの構造が不正です。||パラメータ(JSON)の構造が破綻している場合のエラーです。
+        |010002|PDSユーザIDチェック不正|PDSユーザIDが不正です。||以下に該当する場合のエラーです。<br>・リクエストヘッダに指定されたPDSユーザIDが不正<br>・リクエストヘッダにPDSユーザIDが指定されていない
+        |010004|アクセストークンチェック不正|アクセストークンが不正です。||以下に該当する場合のエラーです。<br>・リクエストヘッダに指定されたアクセストークンが不正(アクセストークンの有効期限が切れている場合も不正なアクセストークンとみなされます。)<br>・リクエストヘッダにアクセストークンが指定されていない
+        |020001|必須チェック不正|{0}を入力してください。|{0}: 項目名|必須パラメータが指定されていなかった場合のエラーです。|        
+        |020003|フォーマットチェック不正|{0}の形式が正しくありません。|{0}: 項目名|APIが規定するデータフォーマットと相違があった場合のエラーです。|
+        |020007|タイムスタンプチェック不正|タイムスタンプが不正です。||以下に該当する場合のエラーです。<br>・リクエストヘッダに指定されたタイムスタンプが不正<br>・リクエストヘッダにタイムスタンプが指定されていない
+        |020014|桁数不一致|{0}が既定の桁数（{1}桁）と不一致です。|{0}: 項目名<br>{1}: 値|パラメータが既定の桁数と不一致の場合のエラーです。
+        |020016|最小桁数チェック不正|{0}の許容桁数({1}桁)が不足しています。|{0}: 項目名<br>{1}: 値|APIが規定する最小入力桁数を不足する桁数での設定があった場合のエラーです。
+        |020019|型チェック不正|{0}は{1}型ではありません。|{0}: 項目名<br>{1}: 値|指定の型以外の型が設定されている場合のエラーです。
+        |020020|入力可能文字不正|{0}に入力不可の文字が含まれています。|{0}: 項目名|入力不可の文字が含まれている場合のエラーです。
+        |990003|復号エラー|復号処理に失敗しました。||復号プロセスで例外が発生した場合のエラーです。
+        |990004|電子署名の不一致|電子署名の検証において不正な署名と判定されました。||電子署名の検証に失敗した場合のエラーです。
+        |990011|WebBureauTransfer送信時エラー|WebBureauTransferの送信処理に失敗しました。||WebBureauTransferを利用するAPIにてWebBureauTransferの送信処理に失敗したときのエラーです。
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponseBody'
+    '500':
+      $ref: '#/components/schemas/errorResponseBody500'
+
+
+components:
+  schemas:
+    timeStamp:
+      $ref: '../../components/header/timeStamp.yaml'
+    accessToken:
+      $ref: '../../components/header/accessToken.yaml'
+
+    # Request body
+    TfUserRequest:
+      description: リクエストボディ
+      type: object
+      properties:
+        pdsUserId:
+          $ref: '../../components/parameters/pdsUserId.yaml'
+      required:
+        - pdsUserId
+
+    # Responses
+    TfUserResponse:
+      description: レスポンス
+      type: object
+      properties:
+        status:
+          $ref: '../../components/parameters/status.yaml'
+        accessToken:
+          $ref: '../../components/parameters/AccessToken.yaml'
+        multiDownloadInfo:
+          title: 個人情報一括ダウンロード情報
+          type: array
+          description: 一括ダウンロード状況をまとめたオブジェクト
+          items:
+            type: object
+            properties:
+              executionStartDate:
+                title: 処理開始日時
+                type: string
+                example: 2022/01/01
+                description: 形式は「yyyy/MM/dd」とする
+                pattern: '[0-9/]'
+                maxLength: 10
+                minLength: 10
+              inquiryId:
+                title: 問い合わせID
+                type: string
+                example: "1111"
+                pattern: '[a-zA-Z0-9]'
+              downloadStatus:
+                title: 実行ステータス
+                type: string
+                example: データ抽出処理中
+                pattern: '[データ抽出処理中|WebBureauTransfer処理中|処理完了|エラー終了]'
+                description: |
+                  「データ抽出処理中」 or 「WebBureauTransfer処理中」 or 「処理完了」 or 「エラー終了」<br>
+                  - データ抽出処理中：
+                  S3からデータの復号化や結合処理、ディレクトリへの配置
+                  - WebBureauTransfer処理中：
+                  チャンクに合わせたサイズ分割、WBTの新規メールやファイル送信処理
+                  - 処理完了：
+                  一括DLが正常に完了
+                  - エラー終了：
+                  一括DLが正常に完了せずに終了
+              executionEndDate:
+                title: 処理完了日時
+                type: string
+                example: 2022/01/11
+                pattern: '[0-9/]'
+                maxLength: 10
+                minLength: 10
+                description: 形式は「yyyy/MM/dd」とする
+            
+    errorResponseBody:
+      description: ERRORレスポンス
+      type: object
+      properties:
+        status:
+          $ref: '../../components/parameters/statusError.yaml'
+        errorInfo:
+          $ref: '../../components/parameters/errorInfo.yaml'
+    errorResponseBody500:
+      $ref: '../../components/parameters/errorResponseBody500.yaml'
